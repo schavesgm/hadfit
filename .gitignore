@@ -1,4 +1,9 @@
 # -- Ignore the cache files
 __pycache__
-__output__
+
+# -- Ignore the output and data folders
+scripts/output
+scripts/data
+
+# -- Ignore the distribution folder
 dist
