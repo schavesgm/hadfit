@@ -1,3 +1,4 @@
 # -- Ignore the cache files
 __pycache__
 __output__
+dist
