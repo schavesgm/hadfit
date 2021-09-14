@@ -1,2 +1,3 @@
 # -- Ignore the cache files
 __pycache__
+__output__
