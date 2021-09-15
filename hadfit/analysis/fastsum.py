@@ -85,7 +85,7 @@ class FastsumRetriever:
     # -- }}}
 
     # -- Private methods of the class {{{
-    def __list_folders(self) -> list[str]:
+    def __list_folders(self) -> list:
         """ List all temperature folders """
         return sorted(
             filter(lambda f: re.match(r'\d+$', f), os.listdir(self.full_path)),
@@ -103,11 +103,11 @@ class FastsumRetriever:
         return os.path.join(self.path, str(self.channel), str(self.flavour), self.sources)
 
     @property
-    def n_tau(self) -> list[int]:
+    def n_tau(self) -> list:
         return [int(nt) for nt in self.__list_folders()]
 
     @property
-    def folders(self) -> list[str]:
+    def folders(self) -> list:
         return [os.path.join(self.full_path, nt) for nt in self.__list_folders()]
 
     @property
@@ -202,7 +202,7 @@ def tidy_fastsum(hadron: Hadron, best_est: dict) -> dict:
         'fw':  f_wind.tolist(), 'M0fw': M0_vals.tolist(), 'dM0fw': M0_errs.tolist() 
     }
 
-def save_fastsum(hadron: Hadron, results: dict, output_path: str = './output'):
+def save_fastsum(hadron: Hadron, results: dict, output_path: str = './output', show_plot: bool = False):
     """ Save the Fastsum results into a folder. The folder will be
     named using the locator:
             
@@ -242,7 +242,7 @@ def save_fastsum(hadron: Hadron, results: dict, output_path: str = './output'):
     with open(os.path.join(full_path, 'results.json'), 'w') as f:
         json.dump(results, f, indent = 4)
 
-    plt.show()
+    if show_plot: plt.show()
 
 if __name__ == '__main__':
     pass

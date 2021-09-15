@@ -12,11 +12,11 @@ class Channel(Enum):
     """ Enumeration containing all relevant Fastsum channels """
 
     # All possible channels contained in the enumeration
-    PSEUDOSCALAR: list[int] = [85]
-    VECTOR:       list[int] = [34, 51, 68]
-    AXIAL_PLUS:   list[int] = [119, 136, 153]
-    SCALAR:       list[int] = [0]
-    AXIAL_MINUS:  list[int] = [221, 238, 255]
+    PSEUDOSCALAR: list = [85]
+    VECTOR:       list = [34, 51, 68]
+    AXIAL_PLUS:   list = [119, 136, 153]
+    SCALAR:       list = [0]
+    AXIAL_MINUS:  list = [221, 238, 255]
 
     @classmethod
     def from_str(cls, name: str):

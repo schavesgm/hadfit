@@ -5,7 +5,7 @@ def clean_parenthesis(obj: object):
     """ Clean the parenthesis in an object after casting it to a string """
     return str(obj).replace('(', '').replace(')', '')
 
-def compute_best_estimate(relevant_info: list[dict], mc_iters: int):
+def compute_best_estimate(relevant_info: list, mc_iters: int):
     """ Compute the best estimate of the ground mass using the
     AICc criterion as a weight. The final value for the mass is computed
     using a MonteCarlo resampling with mc_iters iterations.

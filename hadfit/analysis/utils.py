@@ -1,6 +1,6 @@
 import numpy as np
 
-def outliers_score(data: np.array) -> np.array:
+def outliers_score(data: np.ndarray) -> np.ndarray:
     """ Compute the Z scores to try detecting outliers in the dataset.
 
     As the regression is pretty unstable due to its multistate and
@@ -24,11 +24,11 @@ def outliers_score(data: np.array) -> np.array:
     the distribution of X_i should be normal.
 
     --- Parameters
-    data: np.array
+    data: np.ndarray
         Unidimensional dataset composing the sample of X
 
     --- Returns
-    np.array
+    np.ndarray
         Ordered, O-scores for all the X in the dataset.
     """
 
@@ -41,7 +41,7 @@ def outliers_score(data: np.array) -> np.array:
     # Compute the O-score
     return np.abs(abs_dev_from_median / MAD) if MAD else 0.
 
-def median_distribution(vals: np.array, errs: np.array, num_boot: int = 2000) -> np.array:
+def median_distribution(vals: np.ndarray, errs: np.ndarray, num_boot: int = 2000) -> np.ndarray:
     """ Empirical distribution of the median of the data whose central values
     are contained in vals and whose errors are contained in errs. The distribution
     is calculated using bootstrap resampling, using a resampled dataset res_data
@@ -55,16 +55,16 @@ def median_distribution(vals: np.array, errs: np.array, num_boot: int = 2000) ->
     3. Compute the median of res_data and append it to the distribution array.
 
     --- Parameters
-    vals: np.array
+    vals: np.ndarray
         Point estimate of the parameter/statistic whose median error must be
         extracted.
-    errs: np.array
+    errs: np.ndarray
         Estimation of the errors attached to vals.
     num_boot: int
         Number of bootstrap iterations. The larger, the more precise the distribution.
 
     --- Returns
-    np.array:
+    np.ndarray:
         Array containing num_boot elements with random realistaions of the median.
     """
 

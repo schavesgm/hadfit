@@ -54,7 +54,7 @@ class MultiStateFit:
             self.__models[f's{ns}'] = self.__generate_model(ns + 1)
 
     # -- Public methods of the class {{{
-    def analyse_ground_mass(self, fitres: dict[int, dict], mc_iters: int = 1000) -> list[int, dict[str, dict]]:
+    def analyse_ground_mass(self, fitres: dict, mc_iters: int = 1000) -> dict:
         """ Extract the best estimate of the ground mass from a dictionary
         of results extracted from the method extract_ground_mass. The ground
         mass is extracted using the Akaike information criterion as the
@@ -366,9 +366,8 @@ class MultiStateFit:
 
     # -- Private methods of the class {{{
     def __double_estimate_params(
-        self, iparams: lm.Parameters, pparams: list[lm.Parameters], ns: int, nk: int, 
-        use_bootstrap: bool, inv_cov: np.array
-    ) -> list[lm.model.MinimizerResult]:
+        self, iparams: lm.Parameters, pparams: list, ns: int, nk: int, use_bootstrap: bool, inv_cov: np.ndarray
+        ) -> list:
         """ Fit a model at a given nk two times: first, using iparams as initial parameters;
         second, using the parameters obtained in the previous nk as initial parameters. Returns
         a list of two MinimizerResults.
@@ -385,7 +384,7 @@ class MultiStateFit:
             Initial variable (time) used in the fit.
         use_bootstrap: bool
             Use bootstrap to estimate the standard errors. Computationally expensive.
-        inv_cov: np.array
+        inv_cov: np.ndarray
             Inverse of the covariance matrix used to perform correlated fits.
 
         --- Returns
@@ -543,7 +542,7 @@ class MultiStateFit:
         return fitres
 
     def __fit_model(
-        self, data: np.array, ns: int, kmin: int, use_bootstrap: bool, inv_cov: np.array = None, **kwargs
+        self, data: np.ndarray, ns: int, kmin: int, use_bootstrap: bool, inv_cov: np.ndarray = None, **kwargs
     ) -> lm.model.ModelResult:
         """ Fit the model with ns states to a given dataset. The fit can be done using the
         correlated maximum likelihood estimate or not depending on inv_cov. The standard
@@ -555,7 +554,7 @@ class MultiStateFit:
         The correlation function data is always folded.
 
         --- Parameters
-        data: np.array
+        data: np.ndarray
             Correlation function data used to fit the data. Should be a 2-dimensional array
         ns: int
             Select the state with ns number of states
@@ -564,7 +563,7 @@ class MultiStateFit:
             the end of the dataset.
         use_bootstrap: bool
             Use bootstrap to estimate the standard errors. Computationally expensive.
-        inv_cov: np.array = None
+        inv_cov: np.ndarray = None
             Inverse of the covariance matrix of the data. If passed, the fit is carried out using
             the correlated maximum likelihood estimate.
         **kwargs
@@ -592,7 +591,7 @@ class MultiStateFit:
                 **{regr_str: self.hadron.nk(folded = self.fold)[kmin:]}, **kwargs
             )
 
-    def __isolate_corr(self, ns: int, params: lm.Parameters) -> np.array:
+    def __isolate_corr(self, ns: int, params: lm.Parameters) -> np.ndarray:
         """ Method used to isolate ns states from the correlation function data.
 
         The method computes the difference between the correlation function data
@@ -608,7 +607,7 @@ class MultiStateFit:
             Parameters to be passed to the model
 
         --- Returns
-        np.array
+        np.ndarray
             Dataset of Nc samples of Nk variables containing I(nk)
         """
 
@@ -626,7 +625,7 @@ class MultiStateFit:
         # Return the isolated correlation function
         return np.abs(data - (ns != 0) * self.__models[f's{ns}'](self.hadron.nk(self.fold), **ns_params))
 
-    def __effective_mass(self, corr: np.array, k0_eff: int, kf_eff: int) -> np.array:
+    def __effective_mass(self, corr: np.ndarray, k0_eff: int, kf_eff: int) -> np.ndarray:
         """ Compute the effective mass using some data. The effective mass is
         calculated for several times between t0_eff and tf_eff. The effective
         mass is calculated using the mass that solves
@@ -634,7 +633,7 @@ class MultiStateFit:
                 ansatz(nk, M) / ansatz(nk+1, M)) - corr(nk) / corr(nk+1) = 0
 
         --- Parameters
-        corr: np.array
+        corr: np.ndarray
             Correlation function used to define the function above.
         k0_eff: int 
             Minimum variable (time) for which we would like to solve the function above
@@ -642,7 +641,7 @@ class MultiStateFit:
             Maximum variable (time) for which we would like to solve the function above
 
         --- Returns
-        np.array
+        np.ndarray
             Effective mass extracted for all variables inside [k0_eff, kf_eff]. The first
             value corresponds to the effective mass extracted solving the equation above
             for nk = k0_eff. The last value corresponds to nk = kf_eff.

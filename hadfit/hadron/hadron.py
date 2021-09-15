@@ -13,7 +13,7 @@ def resample(self, data: np.ndarray) -> np.ndarray:
     dataset.
     
     --- Parameters
-    data: np.array
+    data: np.ndarray
         Dataset to be resampled. The new dataset will be composed by
         random rows extracted from this dataset.
 
@@ -232,7 +232,7 @@ class Hadron:
             of C(nk) and C(Nk - nk) for all samples.
 
         --- Returns
-        np.array
+        np.ndarray
             Vector of possibles times available in the correlation function
         """
         return np.arange(self.Nk // 2 + 1) if folded else np.arange(self.Nk)

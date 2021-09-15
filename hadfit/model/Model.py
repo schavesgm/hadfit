@@ -144,7 +144,7 @@ class Model(lm.Model):
         return sy.lambdify(self.symb_regressors + self.symb_parameters, self.expr, 'numpy')
 
     @lru_cache(maxsize = 1)
-    def __gen_jacobian(self, prefix: str) -> list[np.ufunc]:
+    def __gen_jacobian(self, prefix: str) -> list:
         """ Generate the jacobian of the model with respect to the parameters. """
         # Compute the Jacobian of the expression
         jacobian = sy.Matrix([self.expr]).jacobian(self.symb_parameters)
@@ -155,12 +155,12 @@ class Model(lm.Model):
 
     # -- Attribute methods of the class {{{
     @property
-    def symb_regressors(self) -> tuple[sy.Symbol]:
+    def symb_regressors(self) -> tuple:
         """ Symbolic regressors/independent variables of the model. """
         return self.__symreg
 
     @property
-    def symb_parameters(self) -> tuple[sy.Symbol]:
+    def symb_parameters(self) -> tuple:
         """ Symbolic parameters in the model. It takes into account the prefix of the
         model. 
         """
@@ -170,7 +170,7 @@ class Model(lm.Model):
             return sy.symbols(','.join([f'{self.prefix}{s}' for s in self.__sympar]))
 
     @property
-    def symbols(self) -> tuple[sy.Symbol]:
+    def symbols(self) -> tuple:
         """ Tuple containing all symbols in the model """
         return self.symb_regressors + self.symb_parameters
 
@@ -216,7 +216,7 @@ class Model(lm.Model):
         return self.__gen_function(self.prefix)
 
     @property
-    def jacobian(self) -> list[np.ufunc]:
+    def jacobian(self) -> list:
         """ Return the jacobian of the model with respect to the parameters. The
         result is a list of functions that contains the derivatives of the function
         with respect to the parameters. Evaluating the Jacobian should be done throuh
