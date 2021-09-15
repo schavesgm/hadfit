@@ -7,9 +7,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # -- Import some user-defined modules
-from ..hadron import Hadron
-from ..hadron import Flavour
-from ..hadron import Channel
+from hadfit import Hadron
+from hadfit import Flavour
+from hadfit import Channel
 from .utils import median_distribution
 
 class FastsumRetriever:

@@ -36,7 +36,7 @@ if __name__ == '__main__':
     ansatz = Model(f'A * cosh(M * (t - {hadron.Nk // 2}))', 't', 'A, M')
 
     # Generate a MultiState object to fit the hadron
-    msfit = MultiStateFit(hadron, ansatz, Ns_max = 4)
+    msfit = MultiStateFit(hadron, ansatz, Ns_max = 4, fold = True, normalise = True)
 
     # Compute the dictionary of estimates of ground masses
     mass_est = msfit.estimate_ground_mass(2, 5, False)
