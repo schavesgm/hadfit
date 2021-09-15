@@ -25,3 +25,4 @@ from .analysis import tidy_fastsum
 from .analysis import save_fastsum
 from .analysis import median_distribution
 from .analysis import outliers_score
+from .analysis import select_init_windows

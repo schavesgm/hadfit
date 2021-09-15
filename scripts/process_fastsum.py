@@ -7,6 +7,7 @@ from hadfit import MultiStateFit
 from hadfit import hadron_from_fastsum
 from hadfit import tidy_fastsum
 from hadfit import save_fastsum
+from hadfit import select_init_windows
 
 if __name__ == '__main__':
 
@@ -39,7 +40,7 @@ if __name__ == '__main__':
     msfit = MultiStateFit(hadron, ansatz, Ns_max = 4, fold = True, normalise = True)
 
     # Compute the dictionary of estimates of ground masses
-    mass_est = msfit.estimate_ground_mass(2, 5, False)
+    mass_est = msfit.estimate_ground_mass(*select_init_windows(hadron), False)
 
     # Clean the estimate of the ground mass
     best_mass = msfit.analyse_ground_mass(mass_est, 5000)

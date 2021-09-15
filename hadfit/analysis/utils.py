@@ -1,4 +1,8 @@
+# -- Import third-party modules
 import numpy as np
+
+# -- Import user-defined modules
+from hadfit import Hadron
 
 def outliers_score(data: np.ndarray) -> np.ndarray:
     """ Compute the Z scores to try detecting outliers in the dataset.
@@ -84,6 +88,15 @@ def median_distribution(vals: np.ndarray, errs: np.ndarray, num_boot: int = 2000
         median_dist[nb] = np.median(res_vals)
 
     return median_dist
+
+def select_init_windows(hadron: Hadron):
+    """ Select the initial and final windows depending on the Hadron's Nk. """
+    if (hadron.Nk >= 40):
+        return 2, 6
+    elif (30 < hadron.Nk < 40):
+        return 2, 4
+    else:
+        return 2, 3
 
 if __name__ == '__main__':
     pass

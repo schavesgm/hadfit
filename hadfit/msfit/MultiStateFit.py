@@ -35,11 +35,11 @@ class MultiStateFit:
 
         # Echo some important information to stdout
         if log:
-            print(f'Ansatz used: {ansatz.expr}')
-            print(f'    Note that the ansatz must contain a mass and amplitude')
-            print(f'    Ansatz parameters are: {ansatz_params}')
-            print(f'      - {self.__spnames[0]} will be treated as amplitude')
-            print(f'      - {self.__spnames[1]} will be treated as mass')
+            print(f'Ansatz used: {ansatz.expr}', flush = True)
+            print(f'    Note that the ansatz must contain a mass and amplitude', flush = True)
+            print(f'    Ansatz parameters are: {ansatz_params}', flush = True)
+            print(f'      - {self.__spnames[0]} will be treated as amplitude', flush = True)
+            print(f'      - {self.__spnames[1]} will be treated as mass', flush = True)
 
         # Save the inverse of the covariance matrix to optimise the code
         self.__inv_cov = np.linalg.inv(
