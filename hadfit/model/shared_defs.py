@@ -37,7 +37,7 @@ def eval_jacobian(self, params: Optional[lm.Parameters] = None, *args, **kwargs)
     """ Evalulate the jacobian of the model at the correct parameters. """
     
     # If the parameters are provided, then get their values
-    if params: kwargs = kwargs | {p.name : p.value for p in params.values()}
+    if params: kwargs.update({p.name : p.value for p in params.values()})
 
     # If the parameters are provided, then evaluate using their values
     jeval =  [jac(*args, **kwargs) for jac in self.jacobian]
