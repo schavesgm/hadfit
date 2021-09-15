@@ -1,2 +1,2 @@
 # -- Load MulstiStateFit to deal with fitting
-from .multifit import MultiStateFit
+from .MultiStateFit import MultiStateFit

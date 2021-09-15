@@ -13,6 +13,7 @@ def generate_vector():
 
 @pytest.fixture(scope = "session")
 def generate_fake_hadron():
+
     # -- Generate some fake configurations of 128 numbers
     data = np.stack(
         [np.exp(- 0.05 * np.arange(128)) for _ in range(500)], 0
