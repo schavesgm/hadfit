@@ -4,6 +4,3 @@ __pycache__
 # -- Ignore the output and data folders
 scripts/output
 scripts/data
-
-# -- Ignore the distribution folder
-dist
