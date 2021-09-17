@@ -1,9 +1,66 @@
 # -- Import third-party modules
 import numpy as np
 
+# -- Import user-defined modules
+from hadfit import Channel
+from hadfit import Flavour
+from hadfit import Hadron
+
+# Mapping to physical states
+init_mass_mapping = {
+    Channel.PSEUDOSCALAR: {
+        Flavour.UU: 200.0,  Flavour.US: 500.0,
+        Flavour.SS: 950.0,  Flavour.UC: 2000.0,
+        Flavour.SC: 2000.0, Flavour.CC: 2500.0,
+    },
+    Channel.VECTOR: {
+        Flavour.UU: 800.0,  Flavour.US: 900.0,
+        Flavour.SS: 1000.0, Flavour.UC: 2000.0,
+        Flavour.SC: 2000.0, Flavour.CC: 2500.0,
+    },
+    Channel.AXIAL_PLUS: {
+        Flavour.UU: 1300.0, Flavour.US: 1400.0,
+        Flavour.SS: 1400.0, Flavour.UC: 2000.0,
+        Flavour.SC: 2000.0, Flavour.CC: 2500.0,
+    },
+    Channel.SCALAR: {
+        Flavour.UU: 1450.0, Flavour.US: 1400.0,
+        Flavour.SS: 1700.0, Flavour.UC: 2000.0,
+        Flavour.SC: 2000.0, Flavour.CC: 2500.0,
+    }
+}
+
 def clean_parenthesis(obj: object):
     """ Clean the parenthesis in an object after casting it to a string """
     return str(obj).replace('(', '').replace(')', '')
+
+def select_initial_mass(hadron: Hadron, inv_ak: float) -> float:
+    """ Select the initial mass depending on the inverse lattice spacing in the 
+    non-integrated direction. For thermal correlation functions, we use the inverse 
+    of the lattice spacing in the time direction. The initial mass is set to around 
+    200MeV in case the hadron does not belong to the Fastsum famility. In case it is,
+    we set the inital mass close to the physical state.
+
+    --- Parameters:
+    hadron: Hadron
+        Hadron used in the calculation. It is a FASTSUM meson if it contains 
+        ['is_fastsum'] in the information dictionary.
+    inv_ak: float
+        Inverse of the lattice spacing in the non-integrated direction. It should be 
+        in MeV.
+
+    --- Returns:
+    float:
+        Initial value of the mass for the given hadron.
+    """
+    # Mapping containing the masses for the different states (PDG with Fastsum)
+
+    # Check whether the hadron is a fastsum hadron
+    if 'is_fastsum' not in hadron.info: 
+        return 200.0 / inv_ak
+    else:
+        channel, flavour = hadron.info['channel'], hadron.info['flavour']
+        return init_mass_mapping[channel][flavour] / inv_ak
 
 def compute_best_estimate(relevant_info: list, mc_iters: int):
     """ Compute the best estimate of the ground mass using the

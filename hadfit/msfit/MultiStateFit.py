@@ -12,6 +12,7 @@ from hadfit import Model
 from hadfit import bootstrap_fit
 from .utils import clean_parenthesis
 from .utils import compute_best_estimate
+from .utils import select_initial_mass
 
 class MultiStateFit:
     """ Class to fit hadronic data to multistate ansatz. """
@@ -98,11 +99,11 @@ class MultiStateFit:
 
             # Iterate for all information contained in the result dictionary
             for info in results.values():
-                
+
                 # Control variables to clean the data
                 non_NaN_rchi  = not np.isnan(info['rchi'])
                 non_None_dM0  = info['dM0'] is not None
-                not_too_small = info['M0'] > 0.030
+                not_too_small = info['M0'] > 0.010
 
                 # If the error is not None, then check for Nan
                 if non_None_dM0:
@@ -158,7 +159,7 @@ class MultiStateFit:
         for kmin in range(kmin_min, kmin_max + 1):
 
             # Use different minimum values for the amplitude
-            for amp_min in [-1.0]:
+            for amp_min in [-1.0, 0.01]:
 
                 # Estimate the initial parameters using correlated fits
                 init_C = self.estimate_initvals(kmin, True, amp_min)
@@ -175,7 +176,7 @@ class MultiStateFit:
         return fitres
 
     @lru_cache(maxsize = 1)
-    def estimate_initvals(self, kmin: int, use_correlated: bool, amp_min: float = -2) -> lm.Parameters:
+    def estimate_initvals(self, kmin: int, use_correlated: bool, amp_min: float = -2, inv_ak: float = 5997) -> lm.Parameters:
         """ Estimate the initial values of all parameters involved in the model. 
 
         If a model contains Ns states with 2 parameters each, it will estimate 2 * Ns
@@ -214,6 +215,9 @@ class MultiStateFit:
         max_val: float = 4
             Maximum value that each parameter is allowed to take. Varying this number could 
             enchance the estimation of the parameters.
+        inv_ak: float
+            Inverse of the lattice spacing in the non-integrated direction. For example, the 
+            temporal lattice spacing for thermal correlation functions.
 
         --- Returns:
         lm.Parameters: lmfit Parameters object that contains the estimation for each parameter.
@@ -229,7 +233,7 @@ class MultiStateFit:
         kmin_wind = [self.generate_windows(kmin, ns + 1) for ns in range(self.Ns_max)]
 
         # Minimum and maximum values to be used in the effective mass
-        t0_eff = int(0.64 * self.hadron.Nk) // (2 if self.fold else 1)
+        t0_eff = int(0.65 * self.hadron.Nk) // (2 if self.fold else 1)
         tf_eff = int(0.85 * self.hadron.Nk) // (2 if self.fold else 1)
 
         # If use_correlated is true, then use the inv_cov
@@ -243,11 +247,15 @@ class MultiStateFit:
             if self.__spnames[0] in str(param):   # Amplitude
                 params[param].value = 1.0
                 params[param].min   = amp_min
-                params[param].max   = np.abs(amp_min) 
+                params[param].max   = 5.0
             elif self.__spnames[1] in str(param): # Mass (using a_t^{-1} = 5667 [MeV])
-                params[param].value = 0.04002     # Around 240  [MeV]
-                params[param].min   = 0.016675    # Around 100  [MeV]
-                params[param].max   = 1.0         # Around 6000 [MeV]
+                # Select the initial mass of the hadron
+                init_mass = select_initial_mass(self.hadron, inv_ak)
+
+                # Set the value and minimum and maximum limits
+                params[param].value = init_mass
+                params[param].max   = min(1.0, 2.0 * init_mass)
+                params[param].min   = max(180 / inv_ak, 0.2 * init_mass)
 
         # Iterate for each model, from lowest number of parameters to largest
         for ns in range(self.Ns_max):
@@ -257,7 +265,11 @@ class MultiStateFit:
 
             # Set the masses to the corresponding values
             if ns < 2:
-                mass_est = np.mean(self.__effective_mass(np.mean(isol_corr, axis = 0), t0_eff, tf_eff))
+                # Get the initial value of mass to be used
+                M_init = (1 + 0.45 * ns) * params[f'{self.__spnames[1]}0']
+
+                # Estimate the effective mass using the initial mass value
+                mass_est = np.mean(self.__effective_mass(np.mean(isol_corr, axis = 0), t0_eff, tf_eff, M_init))
             else:
                 mass_est = 1.45 * params[f'M{ns - 1}']
 
@@ -625,7 +637,7 @@ class MultiStateFit:
         # Return the isolated correlation function
         return np.abs(data - (ns != 0) * self.__models[f's{ns}'](self.hadron.nk(self.fold), **ns_params))
 
-    def __effective_mass(self, corr: np.ndarray, k0_eff: int, kf_eff: int) -> np.ndarray:
+    def __effective_mass(self, corr: np.ndarray, k0_eff: int, kf_eff: int, M_init: float) -> np.ndarray:
         """ Compute the effective mass using some data. The effective mass is
         calculated for several times between t0_eff and tf_eff. The effective
         mass is calculated using the mass that solves
@@ -639,6 +651,8 @@ class MultiStateFit:
             Minimum variable (time) for which we would like to solve the function above
         kf_eff: int
             Maximum variable (time) for which we would like to solve the function above
+        M_init: float
+            Initial value for the mass used in the solver.
 
         --- Returns
         np.ndarray
@@ -678,7 +692,7 @@ class MultiStateFit:
 
         # Iterate to compute the effective masses
         for nk in range(k0_eff, kf_eff):
-            eff_masses.append(fsolve(to_solve, 0.1, args = (nk))[0])
+            eff_masses.append(fsolve(to_solve, M_init, args = (nk))[0])
 
         return np.array(eff_masses)
 

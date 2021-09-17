@@ -95,6 +95,7 @@ def hadron_from_fastsum(path: str, flavour: Union[str, Flavour], channel: Union[
     # Set some information in the hadron dictionary
     hadron.set_info(flavour = flavour, channel = channel)
     hadron.set_info(Ns = int(info.group(2)), sources = info.group(3))
+    hadron.set_info(is_fastsum = True)
 
     # Set the correct name of the hadron
     hadron.name = f'{channel}_{flavour}_{info.group(3)}'
