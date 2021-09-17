@@ -107,6 +107,18 @@ class FastsumRetriever:
         return [int(nt) for nt in self.__list_folders()]
 
     @property
+    def M0l(self) -> list:
+        return [self.get_median_estimates()[nt][0] for nt in self.n_tau]
+
+    @property
+    def M0c(self) -> list:
+        return [self.get_median_estimates()[nt][1] for nt in self.n_tau]
+
+    @property
+    def M0u(self) -> list:
+        return [self.get_median_estimates()[nt][2] for nt in self.n_tau]
+
+    @property
     def folders(self) -> list:
         return [os.path.join(self.full_path, nt) for nt in self.__list_folders()]
 
