@@ -92,9 +92,9 @@ def median_distribution(vals: np.ndarray, errs: np.ndarray, num_boot: int = 2000
 def select_init_windows(hadron: Hadron):
     """ Select the initial and final windows depending on the Hadron's Nk. """
     if (hadron.Nk >= 40):
-        return 2, 6
+        return 2, 7
     elif (30 < hadron.Nk < 40):
-        return 2, 4
+        return 2, 5
     else:
         return 2, 3
 

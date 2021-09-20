@@ -28,7 +28,7 @@ class FastsumRetriever:
         assert sources in ['ll', 'ss'], f'{sources = } must be in [ll, ss]'
 
         # Assert the path where the data is stored exists
-        assert os.path.exists(self.full_path)
+        assert os.path.exists(self.full_path), f'{self.full_path} does not exist'
 
         # Dictionary that will index the results
         self.__dataset = self.load_data()
