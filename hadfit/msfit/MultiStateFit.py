@@ -103,7 +103,7 @@ class MultiStateFit:
                 # Control variables to clean the data
                 non_NaN_rchi  = not np.isnan(info['rchi'])
                 non_None_dM0  = info['dM0'] is not None
-                not_too_small = info['M0'] > 0.010
+                not_too_small = info['M0'] > 0.030015
 
                 # If the error is not None, then check for Nan
                 if non_None_dM0:
@@ -159,7 +159,7 @@ class MultiStateFit:
         for kmin in range(kmin_min, kmin_max + 1):
 
             # Use different minimum values for the amplitude
-            for amp_min in [-1.0, 0.01]:
+            for amp_min in [-1.0]:
 
                 # Estimate the initial parameters using correlated fits
                 init_C = self.estimate_initvals(kmin, True, amp_min)
@@ -244,18 +244,20 @@ class MultiStateFit:
 
         # Set the parameters default values and bounds
         for param in params: 
-            if self.__spnames[0] in str(param):   # Amplitude
+            # Set the amplitude parameters
+            if self.__spnames[0] in str(param):
                 params[param].value = 1.0
                 params[param].min   = amp_min
                 params[param].max   = 5.0
-            elif self.__spnames[1] in str(param): # Mass (using a_t^{-1} = 5667 [MeV])
+            # Set the mass parameters
+            elif self.__spnames[1] in str(param):
                 # Select the initial mass of the hadron
                 init_mass = select_initial_mass(self.hadron, inv_ak)
 
                 # Set the value and minimum and maximum limits
                 params[param].value = init_mass
-                params[param].max   = min(1.0, 2.0 * init_mass)
-                params[param].min   = max(180 / inv_ak, 0.2 * init_mass)
+                params[param].max   = 0.8
+                params[param].min   = max(100 / inv_ak, 0.2 * init_mass)
 
         # Iterate for each model, from lowest number of parameters to largest
         for ns in range(self.Ns_max):
@@ -266,12 +268,12 @@ class MultiStateFit:
             # Set the masses to the corresponding values
             if ns < 2:
                 # Get the initial value of mass to be used
-                M_init = (1 + 0.45 * ns) * params[f'{self.__spnames[1]}0']
+                M_init = (1 + 0.50 * ns) * params[f'{self.__spnames[1]}0']
 
                 # Estimate the effective mass using the initial mass value
                 mass_est = np.mean(self.__effective_mass(np.mean(isol_corr, axis = 0), t0_eff, tf_eff, M_init))
             else:
-                mass_est = 1.45 * params[f'M{ns - 1}']
+                mass_est = 1.50 * params[f'{self.__spnames[1]}{ns - 1}']
 
             # Set the initial parameter to the mass estimate
             params[f'{self.__spnames[1]}{ns}'].value = mass_est
@@ -480,7 +482,7 @@ class MultiStateFit:
 
                 # Conditions used to swap states
                 cond_A = As0 < Asc
-                cond_B = Ms0 < 0.01 or Ms0 > 2.0
+                cond_B = Ms0 < 0.025 or Ms0 > 0.8 
                 cond_C = As0 < 0.0 and Asc > 1
 
                 # If any condition is met, then swap orders

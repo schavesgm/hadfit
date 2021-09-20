@@ -6,27 +6,27 @@ from hadfit import Channel
 from hadfit import Flavour
 from hadfit import Hadron
 
-# Mapping to physical states
-init_mass_mapping = {
+# Mapping to almost physical fastsum states
+init_mass_fastsum = {
     Channel.PSEUDOSCALAR: {
-        Flavour.UU: 200.0,  Flavour.US: 500.0,
-        Flavour.SS: 950.0,  Flavour.UC: 2000.0,
-        Flavour.SC: 2000.0, Flavour.CC: 2500.0,
+        Flavour.UU: 236.0,   Flavour.US: 500.0,
+        Flavour.SS: 650.0,   Flavour.UC: 1800.0,
+        Flavour.SC: 1900.0,  Flavour.CC: 3000.0,
     },
     Channel.VECTOR: {
-        Flavour.UU: 800.0,  Flavour.US: 900.0,
-        Flavour.SS: 1000.0, Flavour.UC: 2000.0,
-        Flavour.SC: 2000.0, Flavour.CC: 2500.0,
+        Flavour.UU: 750.0,   Flavour.US: 900.0,
+        Flavour.SS: 1000.0,  Flavour.UC: 1900.0,
+        Flavour.SC: 2000.0,  Flavour.CC: 3000.0,
     },
     Channel.AXIAL_PLUS: {
-        Flavour.UU: 1300.0, Flavour.US: 1400.0,
-        Flavour.SS: 1400.0, Flavour.UC: 2000.0,
-        Flavour.SC: 2000.0, Flavour.CC: 2500.0,
+        Flavour.UU: 1200.0, Flavour.US: 1300.0,
+        Flavour.SS: 1500.0, Flavour.UC: 2300.0,
+        Flavour.SC: 2500.0, Flavour.CC: 3400.0,
     },
     Channel.SCALAR: {
-        Flavour.UU: 1450.0, Flavour.US: 1400.0,
-        Flavour.SS: 1700.0, Flavour.UC: 2000.0,
-        Flavour.SC: 2000.0, Flavour.CC: 2500.0,
+        Flavour.UU: 600.0,  Flavour.US: 800.0,
+        Flavour.SS: 1100.0, Flavour.UC: 2200.0,
+        Flavour.SC: 2400.0, Flavour.CC: 3400.0,
     }
 }
 
@@ -53,14 +53,12 @@ def select_initial_mass(hadron: Hadron, inv_ak: float) -> float:
     float:
         Initial value of the mass for the given hadron.
     """
-    # Mapping containing the masses for the different states (PDG with Fastsum)
-
     # Check whether the hadron is a fastsum hadron
     if 'is_fastsum' not in hadron.info: 
         return 200.0 / inv_ak
     else:
         channel, flavour = hadron.info['channel'], hadron.info['flavour']
-        return init_mass_mapping[channel][flavour] / inv_ak
+        return init_mass_fastsum[channel][flavour] / inv_ak
 
 def compute_best_estimate(relevant_info: list, mc_iters: int):
     """ Compute the best estimate of the ground mass using the
