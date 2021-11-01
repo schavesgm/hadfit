@@ -5,11 +5,11 @@ description = ""
 authors     = ["Sergio Chaves Garcia-Mascaraque <sergiozteskate@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.10"
+python = ">=3.9,<3.10"
 numpy = "^1.21.2"
 scipy = "^1.7.1"
 lmfit = "^1.0.2"
-sympy = "^1.8"
+sympy = "^1.9"
 matplotlib = "^3.4.3"
 
 [tool.poetry.dev-dependencies]
