@@ -9,8 +9,6 @@ to baryonic data.
 A simple script that utilises `hadfit` to extract the ground mass of different mesonic correlation
 functions is contained inside `scripts/`. 
 
-TODO: Add the data for reproducibility.
-
 ## How to install the library.
 The library and its dependencies are manages by `poetry`; one can install `poetry` using the following
 command:
