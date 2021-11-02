@@ -29,6 +29,9 @@ if __name__ == '__main__':
 
     # Path to data, channel and flavour to use
     path, channel, flavour = sys.argv[1:]
+    
+    # Proportion of the data used in the analysis
+    prop=0.75
 
     # Load the hadron from the data
     hadron = hadron_from_fastsum(path, flavour, channel)
@@ -37,16 +40,16 @@ if __name__ == '__main__':
     ansatz = Model(f'A * cosh(M * (t - {hadron.Nk // 2}))', 't', 'A, M')
 
     # Generate a MultiState object to fit the hadron
-    msfit = MultiStateFit(hadron, ansatz, Ns_max = 4, fold = True, normalise = True)
+    msfit = MultiStateFit(hadron, ansatz, Ns_max=4, fold=True, normalise=True, prop=prop)
 
     # Compute the dictionary of estimates of ground masses
     mass_est = msfit.estimate_ground_mass(*select_init_windows(hadron), False)
 
     # Clean the estimate of the ground mass
-    best_mass = msfit.analyse_ground_mass(mass_est, 5000)
+    best_mass = msfit.analyse_ground_mass(mass_est, 10000)
 
     # Tidy the data and compute some nice values
     results = tidy_fastsum(hadron, best_mass)
 
     # Save all the fastsum data where it should
-    save_fastsum(hadron, results)
+    save_fastsum(hadron, results, prop=prop)

@@ -15,14 +15,17 @@ from .utils import median_distribution
 class FastsumRetriever:
     """ Class used to retrieve all Fastsum output results in a tidy and easy to manage way. """
 
-    def __init__(self, path: str, flavour: Union[Flavour, str], channel: Union[Channel, str], sources: str):
+    def __init__(self, path: str, flavour: Union[Flavour, str], channel: Union[Channel, str], sources: str, prop: float):
+
+        # Assert prop is in bounds
+        assert 0 < prop <= 1, f'{prop=} must be inside (0, 1]'
 
         # Save the flavour and channel depending on type passed
         self.flavour = flavour if isinstance(flavour, Flavour) else Flavour.from_str(flavour)
         self.channel = channel if isinstance(channel, Channel) else Channel.from_str(channel)
 
         # Save some parameters in the class
-        self.sources, self.path = sources, path
+        self.sources, self.path, self.prop = sources, path, prop
 
         # Assert the sources are correct
         assert sources in ['ll', 'ss'], f'{sources = } must be in [ll, ss]'
@@ -100,7 +103,9 @@ class FastsumRetriever:
 
     @property
     def full_path(self) -> str:
-        return os.path.join(self.path, str(self.channel), str(self.flavour), self.sources)
+        return os.path.join(
+            self.path, str(self.channel), str(self.flavour), self.sources, f'p{self.prop}'
+        )
 
     @property
     def n_tau(self) -> list:
@@ -205,6 +210,11 @@ def tidy_fastsum(hadron: Hadron, best_est: dict) -> dict:
     masses_MeV = (Q05_median, median_M0, Q95_median)
     masses_MeV = tuple(round(q * 5997, 3) for q in masses_MeV)
 
+    # Set the limits to the values folder
+    a_vals.set_ylim(
+        median_M0 - 30 * abs(Q05_median - median_M0), median_M0 + 30 * abs(Q95_median - median_M0)
+    )
+
     # Set the title of the figure
     fig.suptitle(f'${had_label}$\n${masses_MeV}$ [MeV]')
 
@@ -214,11 +224,11 @@ def tidy_fastsum(hadron: Hadron, best_est: dict) -> dict:
         'fw':  f_wind.tolist(), 'M0fw': M0_vals.tolist(), 'dM0fw': M0_errs.tolist() 
     }
 
-def save_fastsum(hadron: Hadron, results: dict, output_path: str = './output', show_plot: bool = False):
+def save_fastsum(hadron: Hadron, results: dict, prop: float, output_path: str = './output', show_plot: bool = False):
     """ Save the Fastsum results into a folder. The folder will be
     named using the locator:
             
-            {output_path}/{channel}/{flavour}/{sources}/{Nt}.
+            {output_path}/{channel}/{flavour}/{sources}/{prop}/{Nk}.
 
     Inside the folder, one can find different files. One for the mass at different
     fit windows, one for the final estimate of the mass independent of the fit
@@ -239,7 +249,7 @@ def save_fastsum(hadron: Hadron, results: dict, output_path: str = './output', s
     sources, Nk      = hadron.info['sources'], hadron.Nk
 
     # Generate the full path to the output, channel, flavour, source, Nt
-    full_path = os.path.join(str(channel), str(flavour), str(sources), str(Nk))
+    full_path = os.path.join(str(channel), str(flavour), str(sources), f'p{prop}', str(Nk))
 
     # Prepend the output path to the full path
     full_path = os.path.join(output_path, full_path)
