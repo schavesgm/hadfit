@@ -7,7 +7,9 @@ observables using a multi-state variational regression technique; this method is
 to baryonic data.
 
 A simple script that utilises `hadfit` to extract the ground mass of different mesonic correlation
-functions is contained inside `scripts/`. 
+functions is contained inside `scripts/`. Inside `scripts/`, a `.tar` file is included. This file
+contains a sample for reproducibility. Due to the huge size of the correlation function data, only 
+one example is included. For more examples, email `sergiozteskate@gmail.com`.
 
 ## How to install the library.
 The library and its dependencies are manages by `poetry`; one can install `poetry` using the following
