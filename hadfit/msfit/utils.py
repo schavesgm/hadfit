@@ -116,14 +116,14 @@ def compute_best_estimate(relevant_info: list, mc_iters: int):
         idx = np.random.randint(0, masses.size, masses.size)
 
         # Generate a new resample of the mass vector
-        res_M = masses[idx] + np.random.normal(scale = errors[idx], size = errors.size)
+        res_M = masses[idx] + np.random.normal(scale=errors[idx], size=errors.size)
 
         # Obtain the weighted average of the resampled vector
-        M_dist[nc] = np.average(res_M, weights = weights[idx])
+        M_dist[nc] = np.average(res_M, weights=weights[idx])
 
     # Compute the weighted average and its standard error
-    best_estimate['M0']  = np.average(masses, weights = weights)
-    best_estimate['dM0'] = np.std(M_dist, ddof = 1)
+    best_estimate['M0']  = np.average(masses, weights=weights)
+    best_estimate['dM0'] = np.std(M_dist, ddof=1)
 
     return best_estimate
 
