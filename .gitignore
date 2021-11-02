@@ -3,3 +3,4 @@ __pycache__
 
 # -- Ignore the output and data folders
 scripts/output
+scripts/data
