@@ -286,6 +286,10 @@ class MultiStateFit:
 
                 # Estimate the effective mass using the initial mass value
                 mass_est = np.mean(self.__effective_mass(np.mean(isol_corr, axis = 0), t0_eff, tf_eff, M_init))
+
+                # Change the mass depending on value
+                mass_est = mass_est if mass_est > 100 / inv_ak else M_init
+
             else:
                 mass_est = 1.50 * params[f'{self.spnames[1]}{ns - 1}']
 
@@ -611,7 +615,7 @@ class MultiStateFit:
 
         if not use_bootstrap:
             return self.models[f's{ns}'].fit(
-                np.mean(data, axis = 0)[kmin:self.maxNk], inv_cov=inv_cov, 
+                np.mean(data, axis=0)[kmin:self.maxNk], inv_cov=inv_cov, 
                 **{regr_str: self.hadron.nk(folded=self.fold)[kmin:self.maxNk]}, **kwargs
             )
         else:
