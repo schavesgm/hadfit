@@ -9,6 +9,15 @@ from hadfit import tidy_fastsum
 from hadfit import save_fastsum
 from hadfit import select_init_windows
 
+def select_numstates(prop: float) -> int:
+    """ Select the number of states to be used in the fits. """
+    if prop >= 0.8:
+        return 4
+    elif 0.5 < prop < 0.8:
+        return 3
+    else:
+        return 2
+    
 if __name__ == '__main__':
 
     # Retrieve the command line arguments
@@ -40,7 +49,7 @@ if __name__ == '__main__':
     ansatz = Model(f'A * cosh(M * (t - {hadron.Nk // 2}))', 't', 'A, M')
 
     # Generate a MultiState object to fit the hadron
-    msfit = MultiStateFit(hadron, ansatz, Ns_max=4, fold=True, normalise=True, prop=prop)
+    msfit = MultiStateFit(hadron, ansatz, Ns_max=select_numstates(prop), fold=True, normalise=True, prop=prop)
 
     # Compute the dictionary of estimates of ground masses
     mass_est = msfit.estimate_ground_mass(*select_init_windows(hadron), False)
