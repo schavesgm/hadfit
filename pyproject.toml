@@ -1,7 +1,7 @@
 [tool.poetry]
 name        = "hadfit"
 version     = "0.1.0"
-description = ""
+description = "Lattice QCD correlation function analysis and multi-state variational spectroscopy regression library."
 authors     = ["Sergio Chaves Garcia-Mascaraque <sergiozteskate@gmail.com>"]
 
 [tool.poetry.dependencies]
