@@ -1,5 +1,6 @@
 # -- Load some builtin modules
 import sys
+import argparse
 
 # -- Load user defined modules
 from hadfit import Model
@@ -9,56 +10,43 @@ from hadfit import tidy_fastsum
 from hadfit import save_fastsum
 from hadfit import select_init_windows
 
-def select_numstates(prop: float) -> int:
-    """ Select the number of states to be used in the fits. """
-    if prop >= 0.8:
-        return 4
-    elif 0.5 < prop < 0.8:
-        return 3
-    else:
-        return 2
-    
 if __name__ == '__main__':
 
-    # Retrieve the command line arguments
-    if len(sys.argv[1:]) == 0:
-        help_str = \
-        '\n\tprocess_fastsum.py path_to_data channel flavour\n\n' + \
-        ' - path_to_data: str\n' + \
-        '   Path where the hadron data for the given Nt is stored.\n' + \
-        ' - channel: str\n' + \
-        '   Channel to be processed as string.\n' + \
-        ' - flavour: str\n' + \
-        '   Flavour to be processed as string.\n\n' + \
-        ' Example: process_fastsum.py ./data/64x32_ll gig5 us\n' + \
-        '   Process the 64x32_ll configurations of the us mesons in the\n' + \
-        '   axial plus channel.'
-        print(help_str)
-        sys.exit()
+    # Generate an argparse object
+    parser = argparse.ArgumentParser('Process FASTSUM correlation functions')
 
-    # Path to data, channel and flavour to use
-    path, channel, flavour = sys.argv[1:]
-    
-    # Proportion of the data used in the analysis
-    prop=0.75
+    # Add some content to the parser
+    parser.add_argument('--path', type=str, help='Path where the hadron data for given Nt and sources is stored')
+    parser.add_argument('--channel', type=str, choices=['g5', 'gi', 'gig5', '1'], help='Channel to be processed.')
+    parser.add_argument('--flavour', type=str, choices=['uu', 'us', 'uc', 'ss', 'sc', 'cc'], help='Flavour to be processed.')
+    parser.add_argument('--prop', type=float, help='Proportion of the data (halved) to be used.')
+    parser.add_argument('--Ns_max', type=int, default=4, help='Maximum number of states to be used in the analysis.')
+    parser.add_argument('--normalise', type=bool, default=True, help='Normalise the data by its middle point (Recommended).')
+    parser.add_argument('--num_boot', type=int, default=5000, help='Number of MC iterations used to compute median stderrs.')
+
+    # Retrieve the command line arguments
+    args = parser.parse_args()
+
+    # Assert prop is a proportion
+    assert 0 < args.prop <= 1.0, f'{prop=} must a proportion: (0, 1.0]'
 
     # Load the hadron from the data
-    hadron = hadron_from_fastsum(path, flavour, channel)
+    hadron = hadron_from_fastsum(args.path, args.flavour, args.channel)
 
     # Generate the ansatz to be used in the fit
     ansatz = Model(f'A * cosh(M * (t - {hadron.Nk // 2}))', 't', 'A, M')
 
     # Generate a MultiState object to fit the hadron
-    msfit = MultiStateFit(hadron, ansatz, Ns_max=select_numstates(prop), fold=True, normalise=True, prop=prop)
+    msfit = MultiStateFit(hadron, ansatz, Ns_max=args.Ns_max, normalise=args.normalise, prop=args.prop)
 
     # Compute the dictionary of estimates of ground masses
     mass_est = msfit.estimate_ground_mass(*select_init_windows(hadron), False)
 
     # Clean the estimate of the ground mass
-    best_mass = msfit.analyse_ground_mass(mass_est, 10000)
+    best_mass = msfit.analyse_ground_mass(mass_est, args.num_boot)
 
     # Tidy the data and compute some nice values
     results = tidy_fastsum(hadron, best_mass)
 
     # Save all the fastsum data where it should
-    save_fastsum(hadron, results, prop=prop)
+    save_fastsum(hadron, results, prop=args.prop)
