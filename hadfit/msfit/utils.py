@@ -77,7 +77,8 @@ def compute_best_estimate(relevant_info: list, mc_iters: int):
     dict[str, float]
         Best estimate of the mass, its error, AICc and reduced chisquared.
     """
-    # Dictionary that will contain the best result
+
+    # Dictionary that will contain the best model selection
     best_estimate = {'M0': 0.0, 'dM0': 0.0, 'AICc': 0.0, 'rchi': 0.0}
 
     # Number of relevant models included

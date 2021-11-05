@@ -17,7 +17,7 @@ from .utils import select_initial_mass
 class MultiStateFit:
     """ Class to fit hadronic data to multistate ansatz. """
 
-    def __init__(self, hadron: Hadron, ansatz: Model, Ns_max: int, fold: bool, normalise: bool, prop: float = 1.0):
+    def __init__(self, hadron: Hadron, ansatz: Model, Ns_max: int, normalise: bool, prop: float = 1.0):
 
         # Assert the proportion of the total extent is a number between 0 and 1.
         assert 0 < prop <= 1, f'{prop_extent=} should be a number between 0 and 1'
@@ -25,14 +25,11 @@ class MultiStateFit:
         # Save the hadron and the ansatz in the class
         self.hadron, self.ansatz = hadron, ansatz
 
-        # Save the maximum number of states used in the model
-        self.Ns_max = Ns_max
-
-        # Save the booleans to fold and normalise the correlation functions
-        self.fold, self.normalise = fold, normalise
+        # Save the maximum number of states used in the model and whether to normalise
+        self.Ns_max, self.normalise = Ns_max, normalise
 
         # Save the proportion of the total extent and the maximum Nk used
-        self.prop, self.maxNk = prop, int(prop * self.hadron.Nk) if not fold else int(prop * (self.hadron.Nk // 2 + 1))
+        self.prop, self.maxNk = prop, int(prop * (self.hadron.Nk // 2 + 1))
 
         # Ansatz parameters to be used in the class
         ansatz_params = str(ansatz.symb_parameters).replace('(', '').replace(')', '')
@@ -43,8 +40,7 @@ class MultiStateFit:
         # Echo some important information to stdout
         print(f' -- Hadron used in the calculation: {self.hadron}', flush=True)
         print(f' -- Maximum number of states used: {self.Ns_max}', flush=True)
-        print(f' -- Folding?: {self.fold}', flush=True)
-        print(f' -- Normalising?: {self.fold}', flush=True)
+        print(f' -- Normalising: {self.normalise}', flush=True)
         print(f' -- Maximum Nk used in the calculation: {self.maxNk}', flush=True)
         print(f' -- Ansatz used: {ansatz.expr}', flush=True)
         print(f'    Note that the ansatz must contain a mass and amplitude', flush=True)
@@ -53,9 +49,7 @@ class MultiStateFit:
         print(f'      - {self.spnames[1]} will be treated as mass', flush=True)
 
         # Save the inverse of the covariance matrix to optimise the code
-        self.inv_cov = np.linalg.inv(
-            self.hadron.covariance_matrix(folded = self.fold) / self.hadron.Nc
-        )
+        self.inv_cov = np.linalg.inv(self.hadron.covariance_matrix(folded=True) / self.hadron.Nc)
 
         # Generate several models to fit the data in a dictionary
         self.models = {}
@@ -189,8 +183,8 @@ class MultiStateFit:
         return fitres
 
     @lru_cache(maxsize = 1)
-    def estimate_initvals(self, kmin: int, use_correlated: bool, amp_min: float = -2, inv_ak: float = 5997) -> lm.Parameters:
-        """ Estimate the initial values of all parameters involved in the model. 
+    def estimate_initvals(self, kmin: int, use_correlated: bool, amp_min: float = -2.0, inv_ak: float = 5997) -> lm.Parameters:
+        """ Estimate the initial values of all parameters involved in the model.
 
         If a model contains Ns states with 2 parameters each, it will estimate 2 * Ns
         initial values. The algorithm used to estimate the parameters is the following:
@@ -251,8 +245,11 @@ class MultiStateFit:
         # Parameters object to be used in the calculation
         params = self.models[f's{self.Ns_max-1}'].params
 
+        # Maximum length used in the estimation
+        max_Nk = self.hadron.Nk // 2 + 1
+
         # Set the parameters default values and bounds
-        for param in params: 
+        for param in params:
 
             # Set the amplitude parameters
             if self.spnames[0] in str(param):
@@ -300,7 +297,7 @@ class MultiStateFit:
             self.models['s0'].set_parameters(params)
 
             # Minimise the lowest model setting to extract an estimate of the parameters
-            result_isol = self.__fit_model(isol_corr, 0, kmin_wind[0], False, inv_cov=inv_cov)
+            result_isol = self.__fit_model(isol_corr, 0, kmin_wind[0], max_Nk, False, inv_cov=inv_cov)
 
             # Set the result parameter values in the appropiate state in params
             for name in result_isol.params:
@@ -319,8 +316,8 @@ class MultiStateFit:
 
                 # Fit to the original correlator using the fixed parameters
                 result_fixed = self.__fit_model(
-                    self.hadron.fold_and_normalise(self.fold, self.normalise), ns, 
-                    kmin_wind[ns], False, inv_cov=inv_cov
+                    self.hadron.fold_and_normalise(True, self.normalise), ns,
+                    kmin_wind[ns], max_Nk, False, inv_cov=inv_cov
                 )
 
                 # Set the result parameter values in the appropiate state in params
@@ -336,8 +333,8 @@ class MultiStateFit:
 
                 # Fit the original correlator varying all parameters
                 result_unfixed = self.__fit_model(
-                    self.hadron.fold_and_normalise(self.fold, self.normalise), ns, kmin_wind[ns], 
-                    False, inv_cov=inv_cov
+                    self.hadron.fold_and_normalise(True, self.normalise), ns, kmin_wind[ns],
+                    max_Nk, False, inv_cov=inv_cov
                 )
 
                 # Set the result parameter values in the appropiate state in params
@@ -393,12 +390,12 @@ class MultiStateFit:
         # Generate the following state value -- Recursive
         next_kmin = self.generate_windows(kmin, ns + 1)
 
-        return (w1 * next_kmin + w2 * self.maxNk) // (w1 + w2)
+        return (w1 * next_kmin + w2 * int(self.hadron.Nk // 2)) // (w1 + w2)
     # -- }}}
 
     # # -- Private methods of the class {{{
     def __double_estimate_params(
-        self, iparams: lm.Parameters, pparams: list, ns: int, nk: int, use_bootstrap: bool, inv_cov: np.ndarray
+        self, iparams: lm.Parameters, pparams: list, ns: int, nk: int, max_Nk: int, use_bootstrap: bool, inv_cov: np.ndarray
         ) -> list:
         """ Fit a model at a given nk two times: first, using iparams as initial parameters;
         second, using the parameters obtained in the previous nk as initial parameters. Returns
@@ -414,6 +411,8 @@ class MultiStateFit:
             Integer that selects the model containing ns + 1 states.
         nk: int
             Initial variable (time) used in the fit.
+        max_Nk: int
+            Maximum variable (time) used in the fit.
         use_bootstrap: bool
             Use bootstrap to estimate the standard errors. Computationally expensive.
         inv_cov: np.ndarray
@@ -430,8 +429,8 @@ class MultiStateFit:
         # Append the result using the initial_parameters as initial values
         res_list = [
             self.__fit_model(
-                self.hadron.fold_and_normalise(self.fold, self.normalise), ns, nk, 
-                use_bootstrap, inv_cov=inv_cov
+                self.hadron.fold_and_normalise(True, self.normalise), ns, nk,
+                max_Nk, use_bootstrap, inv_cov=inv_cov
             )
         ]
 
@@ -444,8 +443,8 @@ class MultiStateFit:
             # Append the result using the initial_parameters as initial values
             res_list.append(
                 self.__fit_model(
-                    self.hadron.fold_and_normalise(self.fold, self.normalise), ns, nk, 
-                    use_bootstrap, inv_cov=inv_cov
+                    self.hadron.fold_and_normalise(True, self.normalise), ns, nk,
+                    max_Nk, use_bootstrap, inv_cov=inv_cov
                 )
             )
 
@@ -500,7 +499,7 @@ class MultiStateFit:
 
                 # Conditions used to swap states
                 cond_A = As0 < Asc
-                cond_B = Ms0 < 0.025 or Ms0 > 0.8 
+                cond_B = Ms0 < 0.025 or Ms0 > 0.8
                 cond_C = As0 < 0.0 and Asc > 1
 
                 # If any condition is met, then swap orders
@@ -565,7 +564,7 @@ class MultiStateFit:
 
                     # Estimate twice the number of parameters if possible
                     fit_results = self.__double_estimate_params(
-                        params, prev_params, ns, nk, use_bootstrap, self.inv_cov
+                        params, prev_params, ns, nk, self.maxNk, use_bootstrap, self.inv_cov
                     )
 
                     # Extract the meaningful information for each result
@@ -575,7 +574,7 @@ class MultiStateFit:
         return fitres
 
     def __fit_model(
-        self, data: np.ndarray, ns: int, kmin: int, use_bootstrap: bool, inv_cov: np.ndarray = None, **kwargs
+        self, data: np.ndarray, ns: int, kmin: int, kmax: int, use_bootstrap: bool, inv_cov: np.ndarray = None, **kwargs
     ) -> lm.model.ModelResult:
         """ Fit the model with ns states to a given dataset. The fit can be done using the
         correlated maximum likelihood estimate or not depending on inv_cov. The standard
@@ -600,7 +599,7 @@ class MultiStateFit:
             Inverse of the covariance matrix of the data. If passed, the fit is carried out using
             the correlated maximum likelihood estimate.
         **kwargs
-            Other parameters to be passed to the fitting routine. 
+            Other parameters to be passed to the fitting routine.
 
         --- Returns
         lm.model.ModelResult
@@ -608,20 +607,20 @@ class MultiStateFit:
         """
             
         # If inv_cov is not None, then crop it
-        inv_cov = inv_cov[kmin:self.maxNk, kmin:self.maxNk] if inv_cov is not None else None
+        inv_cov = inv_cov[kmin:kmax, kmin:kmax] if inv_cov is not None else None
 
         # Obtain the regressor string to pass the nk accordingly
         regr_str = clean_parenthesis(self.ansatz.symb_regressors).replace(',', '')
 
         if not use_bootstrap:
             return self.models[f's{ns}'].fit(
-                np.mean(data, axis=0)[kmin:self.maxNk], inv_cov=inv_cov, 
-                **{regr_str: self.hadron.nk(folded=self.fold)[kmin:self.maxNk]}, **kwargs
+                np.mean(data, axis=0)[kmin:kmax], inv_cov=inv_cov,
+                **{regr_str: self.hadron.nk(folded=True)[kmin:kmax]}, **kwargs
             )
         else:
             return bootstrap_fit(
-                self.models[f's{ns}'], self.models[f's{ns}'].params, 
-                data[:,kmin:self.maxNk], **{regr_str: self.hadron.nk(folded=self.fold)[kmin:self.maxNk]}, 
+                self.models[f's{ns}'], self.models[f's{ns}'].params,
+                data[:,kmin:kmax], **{regr_str: self.hadron.nk(folded=True)[kmin:kmax]},
                 **kwargs
             )
 
@@ -654,10 +653,10 @@ class MultiStateFit:
         ns_params = dict(filter(filter_f, params.items()))
 
         # Fold and normalise the data
-        data = self.hadron.fold_and_normalise(self.fold, self.normalise)
+        data = self.hadron.fold_and_normalise(True, self.normalise)
 
         # Return the isolated correlation function
-        return np.abs(data - (ns != 0) * self.models[f's{ns}'](self.hadron.nk(self.fold), **ns_params))
+        return np.abs(data - (ns != 0) * self.models[f's{ns}'](self.hadron.nk(True), **ns_params))
 
     def __effective_mass(self, corr: np.ndarray, k0_eff: int, kf_eff: int, M_init: float) -> np.ndarray:
         """ Compute the effective mass using some data. The effective mass is
