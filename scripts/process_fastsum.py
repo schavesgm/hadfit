@@ -17,12 +17,12 @@ if __name__ == '__main__':
 
     # Add some content to the parser
     parser.add_argument('--path', type=str, help='Path where the hadron data for given Nt and sources is stored')
-    parser.add_argument('--channel', type=str, choices=['g5', 'gi', 'gig5', '1'], help='Channel to be processed.')
-    parser.add_argument('--flavour', type=str, choices=['uu', 'us', 'uc', 'ss', 'sc', 'cc'], help='Flavour to be processed.')
-    parser.add_argument('--prop', type=float, help='Proportion of the data (halved) to be used.')
+    parser.add_argument('--channel', '-c', type=str, choices=['g5', 'gi', 'gig5', '1'], help='Channel to be processed.')
+    parser.add_argument('--flavour', '-f', type=str, choices=['uu', 'us', 'uc', 'ss', 'sc', 'cc'], help='Flavour to be processed.')
+    parser.add_argument('--prop', '-p', type=float, help='Proportion of the data (halved) to be used.')
     parser.add_argument('--Ns_max', type=int, default=4, help='Maximum number of states to be used in the analysis.')
     parser.add_argument('--normalise', type=bool, default=True, help='Normalise the data by its middle point (Recommended).')
-    parser.add_argument('--num_boot', type=int, default=5000, help='Number of MC iterations used to compute median stderrs.')
+    parser.add_argument('--num_boot', type=int, default=1000, help='Number of MC iterations used to compute median stderrs.')
 
     # Retrieve the command line arguments
     args = parser.parse_args()
