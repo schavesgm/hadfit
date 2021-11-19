@@ -10,7 +10,7 @@ from .Model import Model
 from .Model import CompositeModel
 
 def bootstrap_fit(model: Model, params: lm.Parameters, data: np.ndarray, num_boot: int = 500, **kwargs) -> lm.Parameters:
-    """ Fit a model to some data using bootstrap to calculate the errors.
+    """ Fit a model to some data using bootstrap to estimate the confidence intervals
 
     --- Parameters
     model: Model
@@ -38,11 +38,14 @@ def bootstrap_fit(model: Model, params: lm.Parameters, data: np.ndarray, num_boo
     # Inverse of the covariance matrix
     inv_cov = np.linalg.inv(np.cov(data.T) / data.shape[0])
 
-    # Fit the data to the unresampled data to obtain the point estimates
-    results = model.fit(np.mean(data, axis = 0), inv_cov = inv_cov, **kwargs)
+    # Fit the data to the unresampled dataset to obtain the sample estimate
+    sample_results = model.fit(np.mean(data, axis=0), inv_cov=inv_cov, **kwargs)
 
-    # Container to hold the bootstrap iterations of all parameters
-    param_buffer = np.empty([len(model.symb_parameters), num_boot])
+    # Get the values of the parameters, that is, the sample estimates
+    params_sample = sample_results.params.valuesdict().values()
+
+    # Container that will hold the distribution of delta_star
+    delta_star = np.empty([num_boot, len(model.symb_parameters)])
 
     # Iterate several times
     for nb in range(num_boot):
@@ -53,19 +56,27 @@ def bootstrap_fit(model: Model, params: lm.Parameters, data: np.ndarray, num_boo
         # Obtain the covariance matrix of the data
         inv_cov = np.linalg.inv(np.cov(res_data.T) / data.shape[0])
 
-        # Obtain the data to be fitted, the central value
+        # Obtain the data to be fitted: the central value
         data_fit = np.mean(res_data, axis = 0)
 
         # Obtain the fitted parameters in the current resample
-        params = model.fit(data_fit, inv_cov = inv_cov, **kwargs).params
+        params_star = model.fit(data_fit, inv_cov = inv_cov, **kwargs).params.valuesdict().values()
 
-        # Save the parameters in the container
-        for ip, param in enumerate(params.valuesdict().values()):
-            param_buffer[ip, nb] = param
+        # Save the delta_star estimate params_star - params_sample in this iteration
+        for ip, (p_star, p_samp) in enumerate(zip(params_star, params_sample)):
+            delta_star[nb, ip] = p_star - p_samp
 
-    # Set the correct standard errors in the parameters
+    # Compute the correct standard errors -- 
     for ip, param in enumerate(model.symb_parameters):
-        results.params[str(param)].stderr = np.std(param_buffer[ip,:], ddof = 1)
+
+        # Compute the 80% Confidence intervals
+        Q10, Q90 = np.quantile(emp_bootstrap[:, ip], [0.1, 0.9])
+
+        # Compute the standard error using the CI, assume symmetry
+        stderr = 0.5 * (abs(Q90) + abs(Q10))
+
+        # Set the standard error
+        results.params[str(param)].stderr = stderr
 
     return results
 

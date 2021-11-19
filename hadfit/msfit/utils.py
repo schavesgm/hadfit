@@ -107,7 +107,7 @@ def compute_best_estimate(relevant_info: list, mc_iters: int):
     for key, value in best_estimate.items():
         best_estimate[key] = best_estimate[key] / np.sum(weights)
 
-    # Sample of masses and errors using weighted MonteCarlo
+    # Compute the confidence intervals
     M_dist = np.empty(mc_iters)
 
     # Generate the MonteCarlo sample

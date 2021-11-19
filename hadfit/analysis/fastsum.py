@@ -167,14 +167,18 @@ def tidy_fastsum(hadron: Hadron, best_est: dict) -> dict:
     M0_vals = np.array([m['M0']  for m in best_est.values()])
     M0_errs = np.array([m['dM0'] for m in best_est.values()])
 
-    # Compute the distribution of medians using bootstrap
-    median_dist = median_distribution(M0_vals, M0_errs, 5000)
-
     # Compute the median of the initial (unresampled) dataset
     median_M0 = np.median(M0_vals)
 
-    # Compute the percentiles of the median distribution
-    Q05_median, Q95_median = np.percentile(median_dist, [5, 95])
+    # Compute the distribution of medians using bootstrap
+    delta_star = median_distribution(M0_vals, M0_errs, 5000) - median_M0
+
+    # Compute the percentiles of the delta start median distribution
+    Q05_delta, Q95_delta = np.percentile(delta_star, [5, 95])
+
+    # Compute the confidence interval around the median population
+    Q05_median = median_M0 - Q05_delta
+    Q95_median = median_M0 - Q95_delta
 
     # Generate a figure to plot the data into
     fig = plt.figure(figsize = (18, 12))
@@ -183,8 +187,8 @@ def tidy_fastsum(hadron: Hadron, best_est: dict) -> dict:
     a_hist, a_vals = [fig.add_subplot(1, 2, a) for a in (1, 2)]
 
     # Add some information to each of the axes
-    a_hist.set_xlabel(r'$\tilde{M}_0$')
-    a_hist.set_ylabel(r'$\rho(\tilde{M}_0)$')
+    a_hist.set_xlabel(r'$\delta^\star = M_0^\star - \tilde{M}_0$')
+    a_hist.set_ylabel(r'$\rho(\delta^\star)$')
     a_hist.grid('#4a4e69', alpha = 0.4)
 
     a_vals.set_xlabel(r'$FW$')
@@ -192,9 +196,9 @@ def tidy_fastsum(hadron: Hadron, best_est: dict) -> dict:
     a_vals.grid('#4a4e69', alpha = 0.4)
 
     # Append the histrogram plot to the corresponding axes
-    a_hist.hist(median_dist, bins = 100, color = '#1E352F', density = True)
-    a_hist.axvline(median_M0, color = '#828C51')
-    a_hist.axvspan(Q05_median, Q95_median, color = '#828C51', alpha = 0.4)
+    a_hist.hist(delta_star, bins = 100, color = '#1E352F', density = True)
+    a_hist.axvline(np.median(delta_star), color = '#828C51')
+    a_hist.axvspan(*np.percentile(delta_star, [5, 95]), color = '#828C51', alpha = 0.4)
 
     # Append the mass and the value to the second axes
     a_vals.errorbar(f_wind, M0_vals, M0_errs, color = '#1E352F')
