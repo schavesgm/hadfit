@@ -95,7 +95,7 @@ class Model(lm.Model):
                 resid[:] = resid @ inv_cov * resid
 
             def reduce_fcn(resid):
-                return resid.sum()
+                return resid.mean()
         else:
             # Create the callback inner function
             def callback_inner(params, iter, resid, *args, **kws):
@@ -106,7 +106,10 @@ class Model(lm.Model):
                 return
 
         # Use the correct reduce function in case no fit_kws are passed
-        fit_kws = {'reduce_fcn': reduce_fcn} if fit_kws is None else fit_kws
+        if not fit_kws:
+            fit_kws = {'reduce_fcn': reduce_fcn}
+        else:
+            fit_kws = fit_kws | {'reduce_fcn': reduce_fcn} if 'reduce_fcn' not in fit_kws else fit_kws
 
         # Fit the data using the callback function and the parent fit
         results = super(Model, self).fit(
