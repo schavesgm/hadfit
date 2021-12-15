@@ -48,5 +48,5 @@ if __name__ == '__main__':
     # Tidy the data and compute some nice values
     results = tidy_fastsum(hadron, best_mass)
 
-    # Save all the fastsum data where it should
+    # Save all the fastsum data in the right path
     save_fastsum(hadron, results, prop=args.prop)
