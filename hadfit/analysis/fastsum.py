@@ -228,6 +228,34 @@ def tidy_fastsum(hadron: Hadron, best_est: dict) -> dict:
         'fw':  f_wind.tolist(), 'M0fw': M0_vals.tolist(), 'dM0fw': M0_errs.tolist() 
     }
 
+def compute_effective_mass(hadron: Hadron, output_path: str, show_plot: bool = False) -> tuple[np.ndarray, np.ndarray]:
+    """ Compute the effective mass and plot it in the given output path """
+
+    # Compute the effective mass
+    eff_mass = hadron.effective_mass(0, hadron.Nk // 2, folded=True)
+
+    # Generate a figure to plot the data
+    fig = plt.figure()
+
+    # Add an axis to the figure
+    axis = fig.add_subplot(1, 1, 1)
+
+    # Add some information to the axis
+    axis.set_xlabel('$n_k$')
+    axis.set_ylabel('$M_0^{eff}$')
+    axis.grid('#fefefe', alpha=0.5)
+
+    # Plot the effective mass error bar
+    axis.errorbar(range(0, hadron.Nk // 2), eff_mass[0], yerr=eff_mass[1], color='#1E352F')
+
+    if show_plot: plt.show()
+
+    # Save the figure
+    fig.savefig(os.path.join(output_path, 'eff_mass.pdf'))
+
+    # Return the effective mass
+    return eff_mass
+
 def save_fastsum(hadron: Hadron, results: dict, prop: float, output_path: str = './output', show_plot: bool = False):
     """ Save the Fastsum results into a folder. The folder will be
     named using the locator:
@@ -261,12 +289,22 @@ def save_fastsum(hadron: Hadron, results: dict, prop: float, output_path: str = 
     # Generate the full_path
     if not os.path.exists(full_path): os.makedirs(full_path)
 
+    # Compute the effective mass
+    eff_mass = compute_effective_mass(hadron, full_path, show_plot)
+
     # First, save the plotted figure in its specific place
     results.pop('fig').savefig(os.path.join(full_path, 'plot.pdf'))
 
+    # Add the effective mass to the json file
+    results['eff_mass'] = {
+        'M_eff'  : list(eff_mass[0]),
+        'dM_eff' : list(eff_mass[1]),
+        'nk'     : list(range(0, hadron.Nk // 2)),
+    }
+
     # Save the contents of the dictionary as JSON
     with open(os.path.join(full_path, 'results.json'), 'w') as f:
-        json.dump(results, f, indent = 4)
+        json.dump(results, f, indent=4)
 
     if show_plot: plt.show()
 
