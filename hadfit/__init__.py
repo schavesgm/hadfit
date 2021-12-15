@@ -5,6 +5,7 @@ from .hadron import Hadron
 from .hadron import Flavour
 from .hadron import Channel
 from .hadron import hadron_from_fastsum
+from .hadron import Ansatz
 from .hadron import cosh_ansatz
 from .hadron import exp_ansatz
 

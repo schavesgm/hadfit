@@ -7,7 +7,20 @@ from functools import lru_cache
 import numpy as np
 from scipy.optimize import fsolve
 
-def resample(self, data: np.ndarray) -> np.ndarray:
+# -- Create an ansatz type
+Ansatz = Callable[[float, int, 'Hadron'], np.ndarray]
+
+# -- Create some ansatz functions {{{
+def cosh_ansatz(M: float, t: int, hadron: 'Hadron') -> np.ndarray:
+    """ Cosh ansatz of an antiperiodic correlation function """
+    return np.cosh(M * (t - 0.5 * hadron.Nk))
+
+def exp_ansatz(M: float, t: int, hadron: 'Hadron') -> np.ndarray:
+    """ Exponential ansatz of a correlation function """
+    return np.exp(- M * t)
+# -- }}}
+
+def resample(data: np.ndarray) -> np.ndarray:
     """ Obtain a bootstrap resample of the dataset provided. The resample 
     is a dataset of equivalent size composed by random rows of the first
     dataset.
@@ -183,6 +196,73 @@ class Hadron:
         """
         return np.cov(self.fold_and_normalise(folded, normalised).T) / self.Nc
 
+    def effective_mass(self, t0: int, tf: int, ansatz: Ansatz = cosh_ansatz, folded: bool = False) -> tuple[np.ndarray, np.ndarray]:
+        """ Compute the effective mass of the Hadron by solving the following
+        equation,
+
+            ansatz(M, t, self) / ansatz(M, t+1, self) = corr[t] / corr[t+1],
+
+        where M is the mass of the state, t is the non-integrated variable (nk)
+        and self is a pointer to the same object, which can be used to alter the
+        ansatz internally: for example, by using Nk. The errors are obtained using
+        bootstrap.
+
+        --- Parameters
+        t0: int
+            Initial non-integrated variable (nk) at which the equation above will
+            be solved.
+        tf: int
+            Final non-integrated variable (nk) at which the equation above will
+            be solved.
+        ansatz: Callable[
+            Ansatz (function with signature [M: float, t: int, hadron: Hadron]) used
+            to solve the effective mass equation.
+        folded: bool
+            Flag used to decide whether the correlation function should be folded
+            or not.
+
+        --- Returns
+        tuple[np.ndarray, np.ndarray]
+            Tuple containing the effective mass at different times and the estimated error
+            in its measurement.
+        """
+
+        # List of times where the effective mass will be computed
+        times = list(range(t0, tf))
+
+        # Generate the correct dataset
+        data = self.fold_and_normalise(folded=folded, normalised=True)
+
+        # Container that will hold the effective masses
+        boot_eff_mass = np.empty([500, len(times)])
+
+        # Do the bootstrap iterations
+        for nb in range(boot_eff_mass.shape[0]):
+
+            # Compute the central value of a bootstrap resample
+            corr = np.mean(resample(data), axis=0)
+
+            # Function used to solve the equation
+            to_solve = lambda M, t, hadron: ansatz(M, t, hadron) / ansatz(M, t+1, hadron) - corr[t] / corr[t+1]
+
+            # Compute the effective masses
+            for it, t in enumerate(times):
+                boot_eff_mass[nb, it] = fsolve(to_solve, 0.1, args=(t, self))[0]
+
+        # Compute the central correlation function
+        corr = self.central_value(folded=folded, normalised=True)
+
+        # Function used to compute the effective mass
+        to_solve = lambda M, t, hadron: ansatz(M, t, hadron) / ansatz(M, t+1, hadron) - corr[t] / corr[t+1]
+
+        # Central estimate of the effective mass
+        cent_eff_mass = []
+
+        for it, t in enumerate(times):
+            cent_eff_mass.append(fsolve(to_solve, 0.1, args=(t, self))[0])
+
+        return np.array(cent_eff_mass), np.std(boot_eff_mass, axis=0, ddof=1)
+
     # -- Utility methods of the class {{{
     def set_info(self, **kwargs) -> dict:
         """ Set some information into the information dictionary of the object
@@ -331,73 +411,6 @@ class Hadron:
         """ Dictionary of information of the hadron """
         return self.__info
     # -- }}}
-# -- }}}
-
-# -- Create an ansatz type
-Ansatz = Callable[[float, int, Hadron], np.ndarray]
-
-# -- Create some ansatz functions {{{
-def cosh_ansatz(M: float, t: int, hadron: Hadron) -> np.ndarray:
-    """ Cosh ansatz of an antiperiodic correlation function """
-    return np.cosh(M * (t - 0.5 * hadron.Nk))
-
-def exp_ansatz(M: float, t: int, hadron: Hadron) -> np.ndarray:
-    """ Exponential ansatz of a correlation function """
-    return np.exp(- M * t)
-# -- }}}
-
-# -- Define the effective mass method of the class {{{
-def __effective_mass(self, t0: int, tf: int, ansatz: Ansatz = cosh_ansatz, folded: bool = False) -> np.ndarray:
-    """ Compute the effective mass of the Hadron by solving the following
-    equation,
-
-        ansatz(M, t, self) / ansatz(M, t+1, self) = corr[t] / corr[t+1],
-
-    where M is the mass of the state, t is the non-integrated variable (nk)
-    and self is a pointer to the same object, which can be used to alter the
-    ansatz internally: for example, by using Nk.
-
-    --- Parameters
-    t0: int
-        Initial non-integrated variable (nk) at which the equation above will
-        be solved.
-    tf: int
-        Final non-integrated variable (nk) at which the equation above will
-        be solved.
-    ansatz: Ansatz
-        Ansatz (function with signature [M: float, t: int, hadron: Hadron]) used
-        to solve the effective mass equation.
-    folded: bool
-        Flag used to decide whether the correlation function should be folded
-        or not.
-    """
-
-    # The initial time must be positive definite
-    assert t0 >= 0, f'{t0 = } must be positive definite'
-
-    # Assert some conditions on tf depending on folded
-    if folded:
-        assert t0 < tf <= self.Nk // 2 + 1, f'{tf = } must hold {t0 = } < {tf = } <= {self.Nk // 2 + 1}'
-    else:
-        assert t0 < tf, f'{tf = } must be smaller than {t0 = }'
-
-    # Obtain the central value using folded as argument
-    corr = self.central_value(folded = folded)
-
-    # Function used to solve the equation
-    to_solve = lambda M, t, hadron: ansatz(M, t, hadron) / ansatz(M, t+1, hadron) - corr[t] / corr[t+1]
-
-    # List containing all effective masses
-    eff_masses = []
-
-    # Iterate to compute the effective masses
-    for t in range(t0, tf):
-        eff_masses.append(fsolve(to_solve, 0.1, args = (t, self))[0])
-
-    return np.array(eff_masses)
-
-# -- Set the correct effective mass method in the Hadron class
-Hadron.effective_mass = __effective_mass
 # -- }}}
 
 if __name__ == '__main__':
