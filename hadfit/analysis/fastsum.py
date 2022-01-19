@@ -15,17 +15,14 @@ from .utils import median_distribution
 class FastsumRetriever:
     """ Class used to retrieve all Fastsum output results in a tidy and easy to manage way. """
 
-    def __init__(self, path: str, flavour: Union[Flavour, str], channel: Union[Channel, str], sources: str, prop: float):
-
-        # Assert prop is in bounds
-        assert 0 < prop <= 1, f'{prop=} must be inside (0, 1]'
+    def __init__(self, path: str, flavour: Union[Flavour, str], channel: Union[Channel, str], sources: str, nk_or_prop: str):
 
         # Save the flavour and channel depending on type passed
         self.flavour = flavour if isinstance(flavour, Flavour) else Flavour.from_str(flavour)
         self.channel = channel if isinstance(channel, Channel) else Channel.from_str(channel)
 
         # Save some parameters in the class
-        self.sources, self.path, self.prop = sources, path, prop
+        self.sources, self.path, self.nk_or_prop = sources, path, nk_or_prop
 
         # Assert the sources are correct
         assert sources in ['ll', 'ss'], f'{sources = } must be in [ll, ss]'
@@ -92,7 +89,7 @@ class FastsumRetriever:
         """ List all temperature folders """
         return sorted(
             filter(lambda f: re.match(r'\d+$', f), os.listdir(self.full_path)),
-            reverse = True, key = int
+            reverse=True, key=int
         )
     # -- }}}
 
@@ -103,9 +100,7 @@ class FastsumRetriever:
 
     @property
     def full_path(self) -> str:
-        return os.path.join(
-            self.path, str(self.channel), str(self.flavour), self.sources, f'p{self.prop}'
-        )
+        return os.path.join(self.path, str(self.channel), str(self.flavour), self.sources, f'{self.nk_or_prop}')
 
     @property
     def n_tau(self) -> list:
@@ -256,11 +251,11 @@ def compute_effective_mass(hadron: Hadron, output_path: str, show_plot: bool = F
     # Return the effective mass
     return eff_mass
 
-def save_fastsum(hadron: Hadron, results: dict, prop: float, output_path: str = './output', show_plot: bool = False):
+def save_fastsum(hadron: Hadron, results: dict, nk_max_or_prop: str, output_path: str = './output', show_plot: bool = False):
     """ Save the Fastsum results into a folder. The folder will be
     named using the locator:
             
-            {output_path}/{channel}/{flavour}/{sources}/{prop}/{Nk}.
+            {output_path}/{channel}/{flavour}/{sources}/{nk_max}/{Nk}.
 
     Inside the folder, one can find different files. One for the mass at different
     fit windows, one for the final estimate of the mass independent of the fit
@@ -272,6 +267,8 @@ def save_fastsum(hadron: Hadron, results: dict, prop: float, output_path: str = 
         some key information inside its information dictionary.
     results: dict
         Dictionary of results obtained by the function "tidy_fastsum"
+    nk_max_or_prop: str
+        String locator for the maximum number of points to be used.
     output_path: str
         Path where the data will be stored.
     """
@@ -281,7 +278,7 @@ def save_fastsum(hadron: Hadron, results: dict, prop: float, output_path: str = 
     sources, Nk      = hadron.info['sources'], hadron.Nk
 
     # Generate the full path to the output, channel, flavour, source, Nt
-    full_path = os.path.join(str(channel), str(flavour), str(sources), f'p{prop}', str(Nk))
+    full_path = os.path.join(str(channel), str(flavour), str(sources), nk_max_or_prop, str(Nk))
 
     # Prepend the output path to the full path
     full_path = os.path.join(output_path, full_path)
