@@ -1,6 +1,9 @@
 # -- Ignore the cache files
 __pycache__
 
+# -- Ignore some unwanted scripts
+scripts/copy_data.sh
+
 # -- Ignore the output and data folders
 scripts/output
 scripts/data
