@@ -74,6 +74,10 @@ def hadron_from_fastsum(path: str, flavour: Union[str, Flavour], channel: Union[
     # Get all relevant files in the path
     files = list(filter(fastsum_filter(flavour, channel), os.listdir(path)))
 
+    # If no files are available, then raise an error
+    if not files:
+        raise ValueError(f'{channel}-{flavour} hadron does not exist in {path=}')
+
     # Get all relevant information from the path to define the Meson
     info = re.match(r'(\d+)x(\d+)_(\w+)', os.path.basename(path))
 
