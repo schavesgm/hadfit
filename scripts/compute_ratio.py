@@ -86,7 +86,7 @@ if __name__ == '__main__':
 
     # Add some data to the parser
     parser.add_argument('-s', '--sources', type=str, choices=['ll', 'ss'], help='Sources used in the calculation')
-    parser.add_argument('-p', '--path', type=str, default='./data', help='Sources used in the calculation')
+    parser.add_argument('-p', '--path', type=str, default='./data', help='Path where the data is stored')
     parser.add_argument('-i', '--include_128', action='store_true', help='Compute the ratio of Nt=128')
     parser.add_argument('-t', '--use_tau_tilde', action='store_true', help='Use tau_tilde = t - Nt / 2 in the plot')
 
