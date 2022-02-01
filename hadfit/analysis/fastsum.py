@@ -175,6 +175,9 @@ def tidy_fastsum(hadron: Hadron, best_est: dict) -> dict:
     Q05_median = median_M0 - Q05_delta
     Q95_median = median_M0 - Q95_delta
 
+    # Flip the values of the variables
+    Q05_median, Q95_median = Q95_median, Q05_median
+
     # Generate a figure to plot the data into
     fig = plt.figure(figsize = (18, 12))
 
@@ -201,8 +204,8 @@ def tidy_fastsum(hadron: Hadron, best_est: dict) -> dict:
     a_vals.fill_between(f_wind, Q05_median, Q95_median, color = '#828C51', alpha = 0.4)
 
     # Construct the hadron identifier label
-    had_label = str(hadron.info['channel'].to_latex()) + '\quad\quad;\quad\quad' + \
-                str(hadron.info['flavour']) + '\quad\quad;\quad\quad' + \
+    had_label = str(hadron.info['channel'].to_latex()) + r'\quad\quad;\quad\quad' + \
+                str(hadron.info['flavour']) + r'\quad\quad;\quad\quad' + \
                 str(hadron.info['sources'])
 
     # Construct the masses and convert them to MeV
