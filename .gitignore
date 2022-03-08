@@ -8,3 +8,7 @@ scripts/copy_data.sh
 scripts/output
 scripts/data
 scripts/figures
+
+# -- Ignore some of the scripts
+plot*.py
+pion_velocity.py
