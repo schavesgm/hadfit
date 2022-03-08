@@ -8,6 +8,7 @@ str_gig5 = '(gig5)_(1pp)_(axial_plus)_(aa)'
 str_gigj = '(gigj)_(1pm)_(axial_minus)'
 str_1    = '(1)_(0pp)_(scalar)_(ss)'
 str_axps = '(axps)_(ap)'
+str_a0a0 = '(aa)_(a0a0)_(g0g5)'
 
 class Channel(Enum):
     """ Enumeration containing all relevant Fastsum channels """
@@ -19,6 +20,7 @@ class Channel(Enum):
     SCALAR       = [0]
     AXIAL_MINUS  = [221, 238, 255]
     AXIAL_PSEUD  = [101]
+    A0_A0        = [102]
 
     @classmethod
     def from_str(cls, name: str):
@@ -39,6 +41,8 @@ class Channel(Enum):
             return cls.SCALAR
         elif lower in str_axps:    
             return cls.AXIAL_PSEUD
+        elif lower in str_a0a0:    
+            return cls.A0_A0
         else: 
             raise ValueError(
                 f'{name = } is not a valid Channel. \n' + \
@@ -59,6 +63,8 @@ class Channel(Enum):
             return r'1\,(0^{++})'
         elif self == Channel.AXIAL_PSEUD:
             return r'\gamma_0\gamma_5-\gamma_5'
+        elif self == Channel.A0_A0:
+            return r'\gamma_0\gamma_5-\gamma_0\gamma_5'
         else:
             return
 
@@ -77,6 +83,8 @@ class Channel(Enum):
             return '1_0pp'
         elif self == Channel.AXIAL_PSEUD:
             return 'g0g5-g5'
+        elif self == Channel.A0_A0:
+            return 'g0g5-g0g5'
         else:
             'None'
 
